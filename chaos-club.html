@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171022">
+<title>CHAOS CLUB — The Un-serious Game</title>
+<style>
+:root{--bg:#171022;--panel:#241a35;--panel2:#302344;--pink:#ff5caa;--yellow:#ffd166;--cyan:#63e6e2;--white:#fff8ff;--muted:#b9a9c9;--line:#4b3b60}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#432451 0,transparent 35%),radial-gradient(circle at 100% 25%,#173d4c 0,transparent 32%),var(--bg);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+main{max-width:760px;margin:auto;padding:22px 16px 50px}.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}.logo{font-weight:1000;letter-spacing:2px;font-size:13px;color:var(--cyan)}.pill{border:1px solid var(--line);border-radius:99px;padding:7px 11px;color:var(--muted);font-size:12px}
+h1{font-size:clamp(40px,10vw,68px);line-height:.9;letter-spacing:-3px;margin:25px 0 12px;font-weight:1000}h1 span{color:var(--pink)}.sub{color:var(--muted);line-height:1.5;margin:0 0 24px}
+.card{background:linear-gradient(145deg,rgba(48,35,68,.96),rgba(31,24,46,.96));border:1px solid var(--line);border-radius:22px;padding:18px;margin:14px 0;box-shadow:0 14px 40px #08051055}
+h2{font-size:19px;margin:0 0 12px}.small{font-size:13px;color:var(--muted);line-height:1.5}
+input{width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:13px;background:#171022;color:var(--white);font-size:16px;outline:none;margin:7px 0}
+input:focus{border-color:var(--cyan)}button{border:0;border-radius:14px;padding:14px 16px;font-weight:900;font-size:15px;cursor:pointer;color:#211329;background:var(--yellow);width:100%;margin-top:9px}
+button.secondary{background:#443456;color:var(--white);border:1px solid #66527e}button.pink{background:var(--pink);color:#280f20}button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hidden{display:none!important}.status{font-size:13px;color:var(--cyan);margin-top:10px;min-height:20px}
+.roomcode{font-size:30px;letter-spacing:7px;font-weight:1000;color:var(--yellow);text-align:center;padding:12px}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}.score{font-size:13px;color:var(--muted)}.score b{color:var(--yellow)}
+.tag{display:inline-block;border-radius:99px;background:#51365d;color:#ffd9ef;padding:6px 10px;font-size:11px;font-weight:900;letter-spacing:.7px}
+.prompt{font-size:clamp(23px,6vw,34px);font-weight:950;line-height:1.12;margin:15px 0}
+.options{display:grid;gap:10px;margin-top:15px}.choice{padding:15px;border:1px solid var(--line);border-radius:15px;background:#1b1428;color:var(--white);text-align:left;font-weight:750;line-height:1.35}.choice:active{transform:scale(.99)}.choice.selected{border-color:var(--pink);background:#47263f}
+.feed{max-height:210px;overflow:auto;display:grid;gap:8px}.feeditem{padding:10px 12px;background:#1b1428;border-radius:12px;font-size:13px;color:#e8dcef}.feeditem b{color:var(--cyan)}
+.bigemoji{font-size:42px}.center{text-align:center}.bar{height:7px;background:#130e1d;border-radius:99px;overflow:hidden;margin:12px 0}.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--pink),var(--yellow));width:0%}
+footer{text-align:center;color:#786987;font-size:11px;margin:26px 0}
+@media(max-width:440px){.row{grid-template-columns:1fr}.card{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+ <div class="brand"><div class="logo">✦ CHAOS CLUB</div><div class="pill">2 PLAYERS · ONLINE</div></div>
+ <h1>ZERO<br><span>CHILL.</span></h1>
+ <p class="sub">A completely unserious multiplayer showdown. Make ridiculous choices, sabotage each other (lovingly), and survive 7 rounds of pure chaos. 🤡</p>
+
+ <section id="lobby" class="card">
+  <h2>🎮 Enter the chaos</h2>
+  <label class="small" for="nickname">Your nickname</label>
+  <input id="nickname" maxlength="16" placeholder="e.g. Potato King" autocomplete="nickname">
+  <div class="row">
+   <button id="createBtn" onclick="createRoom()">CREATE ROOM</button>
+   <button class="secondary" onclick="showJoin()">JOIN ROOM</button>
+  </div>
+  <div id="joinArea" class="hidden">
+   <input id="roomInput" maxlength="8" placeholder="Enter room code" autocapitalize="characters">
+   <button class="pink" onclick="joinRoom()">JOIN THE MADNESS</button>
+  </div>
+  <div id="lobbyStatus" class="status">Both players need this same link. No account needed.</div>
+ </section>
+
+ <section id="waiting" class="card hidden center">
+  <div class="bigemoji">📡</div><h2>Room is live!</h2><div class="small">Send this room code to your friend:</div>
+  <div id="codeDisplay" class="roomcode">------</div>
+  <button class="secondary" onclick="copyCode()">COPY ROOM CODE</button>
+  <div id="waitingStatus" class="status">Waiting for the other chaos agent...</div>
+ </section>
+
+ <section id="game" class="hidden">
+  <div class="card">
+   <div class="topline"><span class="tag" id="roundTag">ROUND 1 / 7</span><span class="score" id="scoreLine"></span></div>
+   <div class="bar"><i id="progress"></i></div>
+   <div class="small" id="phaseText">Both players choose one option.</div>
+   <div class="prompt" id="prompt">Loading chaos...</div>
+   <div class="options" id="options"></div>
+   <div id="gameStatus" class="status"></div>
+  </div>
+  <div class="card">
+   <h2>📻 Chaos feed</h2><div class="feed" id="feed"></div>
+  </div>
+  <div class="row"><button class="secondary" onclick="sendReaction('🤣')">🤣 LOL</button><button class="secondary" onclick="sendReaction('💀')">💀 I’m done</button></div>
+ </section>
+
+ <section id="result" class="card hidden center">
+  <div class="bigemoji">🏆</div><h2>THE CHAOS HAS SPOKEN</h2>
+  <div class="prompt" id="winnerText"></div><p class="small" id="finalScores"></p>
+  <button onclick="restartGame()">PLAY AGAIN</button>
+  <button class="secondary" onclick="location.reload()">BACK TO LOBBY</button>
+ </section>
+ <footer>CHAOS CLUB · No skill. No dignity. Just vibes.</footer>
+</main>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const rounds=[
+ {p:"A pigeon has just become your manager. What is its first order?",o:["Cancel all meetings. Coo later.","Promote the office chair to CEO.","Steal everyone's lunch for 'team building'."]},
+ {p:"You're trapped in a lift with a dramatic vampire. Your move?",o:["Offer it garlic bread. Establish dominance.","Ask if it has a LinkedIn.","Start playing elevator music louder."]},
+ {p:"Your phone autocorrects every message. What does it replace 'hello' with?",o:["I HAVE CHOSEN CHAOS.","Respectfully, I am a potato.","The ducks know what you did."]},
+ {p:"An alien asks what humans do for fun. Explain badly.",o:["We stare at tiny screens until our thumbs evolve.","We pay money to enter rooms and escape them.","We argue with invisible people on the internet."]},
+ {p:"You accidentally become the king of a tiny island. New law?",o:["Everyone must wear a traffic cone on Fridays.","All arguments settled by dramatic dance-off.","National anthem is 40 seconds of microwave beeps."]},
+ {p:"A ghost is haunting your kitchen. How do you negotiate?",o:["Tell it rent is due on the first.","Leave a 1-star review of its haunting.","Challenge it to a staring contest."]},
+ {p:"The final boss is a giant angry spoon. Your strategy?",o:["Distract it with soup gossip.","Equip two smaller spoons as bodyguards.","Scream 'fork you' and sprint."]}
+];
+let peer,conn,host=false,roomCode="",myName="",otherName="",myId="",round=0,myChoice=null,opChoice=null,myScore=0,opScore=0,playersReady=false,finished=false;
+function status(t){$('lobbyStatus').textContent=t}
+function showJoin(){$('joinArea').classList.remove('hidden');$('roomInput').focus()}
+function nickname(){return $('nickname').value.trim().slice(0,16)||"Mystery Potato"}
+function makeCode(){return Math.random().toString(36).slice(2,7).toUpperCase()}
+function createRoom(){
+ myName=nickname();host=true;roomCode=makeCode();status("Creating your room...");
+ peer=new Peer("chaos-"+roomCode.toLowerCase());
+ peer.on('open',()=>{$('lobby').classList.add('hidden');$('waiting').classList.remove('hidden');$('codeDisplay').textContent=roomCode;});
+ peer.on('connection',c=>{if(conn){c.close();return}conn=c;setupConnection();});
+ peer.on('error',e=>status("Connection issue: "+e.type+". Try creating a new room."));
+}
+function joinRoom(){
+ myName=nickname();roomCode=$('roomInput').value.trim().toUpperCase();
+ if(!/^[A-Z0-9]{5}$/.test(roomCode)){status("Enter the 5-character room code.");return}
+ status("Connecting to room...");
+ peer=new Peer();peer.on('open',()=>{conn=peer.connect("chaos-"+roomCode.toLowerCase(),{reliable:true});setupConnection();});
+ peer.on('error',e=>status("Couldn't connect. Check the code and try again."));
+}
+function setupConnection(){
+ conn.on('open',()=>{
+  conn.send({type:'hello',name:myName,host});
+  if(host){$('waitingStatus').textContent="Player connected! Starting the chaos...";setTimeout(startGame,900)}
+ });
+ conn.on('data',msg=>handleMessage(msg));
+ conn.on('close',()=>{$('gameStatus').textContent="Connection lost. Refresh and create a new room."});
+ conn.on('error',()=>{$('gameStatus').textContent="Connection hiccup. Try refreshing."});
+}
+function send(msg){if(conn&&conn.open)conn.send(msg)}
+function handleMessage(m){
+ if(m.type==='hello'){otherName=m.name;if(host){$('waitingStatus').textContent=otherName+" joined!";}else{startGame();}}
+ if(m.type==='start'){otherName=m.otherName;round=m.round;myScore=m.myScore;opScore=m.opScore;renderRound();}
+ if(m.type==='choice'){opChoice=m.choice;maybeReveal()}
+ if(m.type==='next'){round=m.round;myChoice=null;opChoice=null;renderRound()}
+ if(m.type==='reaction'){addFeed(otherName+" says "+m.emoji)}
+ if(m.type==='finish'){showResult(m.myScore,m.opScore,m.hostName,m.guestName)}
+ if(m.type==='restart'){round=0;myScore=0;opScore=0;myChoice=null;opChoice=null;finished=false;renderRound()}
+}
+function startGame(){
+ if($('game').classList.contains('hidden')===false)return;
+ $('lobby').classList.add('hidden');$('waiting').classList.add('hidden');$('game').classList.remove('hidden');
+ if(host){round=0;myScore=0;opScore=0;send({type:'start',otherName:myName,round,myScore,opScore});}
+ renderRound();
+}
+function renderRound(){
+ if(round>=rounds.length){endGame();return}
+ const r=rounds[round];myChoice=null;opChoice=null;
+ $('roundTag').textContent="ROUND "+(round+1)+" / "+rounds.length;
+ $('progress').style.width=((round)/rounds.length*100)+"%";
+ $('scoreLine').innerHTML=myName+" <b>"+myScore+"</b> · "+otherName+" <b>"+opScore+"</b>";
+ $('phaseText').textContent="Pick the most chaotic answer. Both choices stay secret until locked.";
+ $('prompt').textContent=r.p;
+ $('options').innerHTML="";
+ r.o.forEach((opt,i)=>{const b=document.createElement('button');b.className='choice';b.textContent=(i+1)+". "+opt;b.onclick=()=>choose(i,b);$('options').appendChild(b)});
+ $('gameStatus').textContent="Your move, "+myName+".";
+}
+function choose(i,el){
+ if(myChoice!==null)return;myChoice=i;
+ document.querySelectorAll('.choice').forEach(b=>b.disabled=true);el.classList.add('selected');
+ $('gameStatus').textContent="Locked in! Waiting for "+otherName+"...";
+ send({type:'choice',choice:i});
+ maybeReveal();
+}
+function maybeReveal(){
+ if(myChoice===null||opChoice===null)return;
+}
+function addFeed(t){const d=document.createElement('div');d.className='feeditem';d.textContent=t;$('feed').prepend(d)}
+function revealRound(remoteChoice){
+ opChoice=remoteChoice;
+ if(myChoice===null||opChoice===null)return;
+ const opts=rounds[round].o;
+ const mine=opts[myChoice],theirs=opts[opChoice];
+ let outcome;
+ if(myChoice===opChoice){myScore+=1;opScore+=1;outcome="Same brain cell! Both get a point."}
+ else if((myChoice+1)%3===opChoice){myScore+=2;outcome=myName+" wins this round! +2 chaos points."}
+ else{opScore+=2;outcome=otherName+" wins this round! +2 chaos points."}
+ addFeed(outcome);addFeed(myName+": "+mine);addFeed(otherName+": "+theirs);
+ $('gameStatus').textContent=outcome+" Next round in a moment...";
+ $('options').innerHTML='<div class="feeditem"><b>You:</b> '+mine+'</div><div class="feeditem"><b>'+otherName+':</b> '+theirs+'</div>';
+ $('scoreLine').innerHTML=myName+" <b>"+myScore+"</b> · "+otherName+" <b>"+opScore+"</b>";
+ if(host){
+  send({type:'reveal',choice:opChoice,hostChoice:myChoice,myScore,opScore,outcome});
+  setTimeout(()=>{round++;if(round<rounds.length)send({type:'next',round});renderRound()},2600);
+ }
+}
+function sendReaction(e){send({type:'reaction',emoji:e});addFeed("You: "+e)}
+function endGame(){
+ finished=true;$('game').classList.add('hidden');$('result').classList.remove('hidden');
+ const win=myScore===opScore?"IT'S A TIE. TWO CHAOS GREMLINS.":myScore>opScore?myName+" IS THE CHAOS CHAMPION!":otherName+" STOLE THE CROWN!";
+ $('winnerText').textContent=win;$('finalScores').textContent=myName+" "+myScore+" — "+otherName+" "+opScore;
+ send({type:'finish',myScore,opScore,hostName:host?myName:otherName,guestName:host?otherName:myName});
+}
+function showResult(a,b,h,g){
+ $('game').classList.add('hidden');$('result').classList.remove('hidden');
+ const localScore=host?a:b,remoteScore=host?b:a;
+ $('winnerText').textContent=localScore===remoteScore?"IT'S A TIE. TWO CHAOS GREMLINS.":localScore>remoteScore?myName+" IS THE CHAOS CHAMPION!":otherName+" STOLE THE CROWN!";
+ $('finalScores').textContent=myName+" "+localScore+" — "+otherName+" "+remoteScore;
+}
+function restartGame(){send({type:'restart'});round=0;myScore=0;opScore=0;finished=false;$('result').classList.add('hidden');$('game').classList.remove('hidden');renderRound()}
+function copyCode(){if(navigator.clipboard)navigator.clipboard.writeText(roomCode).then(()=>$('waitingStatus').textContent="Copied! Send it to your friend.");else $('waitingStatus').textContent="Your room code is "+roomCode}
+</script>
+<script>
+// Patch the message handler for synchronized simultaneous reveals and round progression.
+const originalHandleMessage=handleMessage;
+handleMessage=function(m){
+ if(m.type==='choice'){opChoice=m.choice;if(myChoice!==null)revealRound(opChoice);return}
+ if(m.type==='reveal'){
+  opChoice=m.hostChoice;myChoice=m.choice;myScore=m.opScore;opScore=m.myScore;
+  const opts=rounds[round].o;addFeed(m.outcome);addFeed(myName+": "+opts[myChoice]);addFeed(otherName+": "+opts[opChoice]);
+  $('gameStatus').textContent=m.outcome+" Next round in a moment...";
+  $('options').innerHTML='<div class="feeditem"><b>You:</b> '+opts[myChoice]+'</div><div class="feeditem"><b>'+otherName+':</b> '+opts[opChoice]+'</div>';
+  $('scoreLine').innerHTML=myName+" <b>"+myScore+"</b> · "+otherName+" <b>"+opScore+"</b>";
+  return;
+ }
+ originalHandleMessage(m);
+};
+</script>
+</body>
+</html>
